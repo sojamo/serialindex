@@ -1,0 +1,30 @@
+#######################################
+# Syntax Coloring Map For SerialIndex
+#######################################
+
+#######################################
+# Class (KEYWORD3)
+#######################################
+
+SerialIndex	KEYWORD3
+Index	KEYWORD3
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+# methods names in commond
+begin		KEYWORD2
+io			KEYWORD2
+update		KEYWORD2
+subscribe	KEYWORD2
+read		KEYWORD2 
+write		KEYWORD2 
+
+# SerialIndex Class
+begin	KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################

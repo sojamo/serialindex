@@ -1,0 +1,8 @@
+.DS_Store
+.classpath
+.externalToolBuilders
+.project
+.settings
+Java/dist/
+Java/target/
+Java/test/
