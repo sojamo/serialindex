@@ -11,9 +11,11 @@
 #define TYPE_INT 'i'
 #define TYPE_FLOAT 'f'
 #define TYPE_STRING 's'
-#define TYPE_CHAR_ARRAY 'S'
+#define TYPE_CHAR_ARRAY 'C'
 #define TYPE_INT_ARRAY 'I'
 #define TYPE_FLOAT_ARRAY 'F'
+#define DELIMITER "="
+
 
 template <size_t N> struct type_of_size { typedef char type[N]; };
 template <typename T, size_t Size> typename type_of_size<Size>::type& sizeof_array_helper(T(&)[Size]);
@@ -22,6 +24,9 @@ template <typename T, size_t Size> typename type_of_size<Size>::type& sizeof_arr
 
 template< typename _A, typename _B > bool compareType( _A a, _B b ) { return false; }
 template< typename _A > bool compareType( _A a, _A b ) { return true; }
+
+
+typedef void (*fptr)();
 
 /* Value */
 class Value 
@@ -54,9 +59,10 @@ union Format
 	float* f;
 	int* i;
 	char* c;
+
 };
 
-/* Variable */
+/* Variable, stores the state of a variable */
 template< typename T> 
 struct Variable 
 {
@@ -69,11 +75,12 @@ struct Variable
 	}
 };
 
-/* Array */
+
+/* Array, stores the state of an array */
 template< typename T> 
 struct Array 
 {
-	int size;
+	size_t size;
 	T now;
 	T then;
 
@@ -83,8 +90,13 @@ struct Array
 	}
 };
 
+/* Function, stores the reference to a function */
+struct Function 
+{
+	char* index;
+	fptr fn;
+};
 
-// TODO dont forget to free()
 
 class SerialIndex
 {
@@ -100,58 +112,101 @@ class SerialIndex
 			values = NULL;
 		}
 
-		void subscribe(const char* k, int &v) 
+		/* int */
+		SerialIndex& add(const char* k, int &v, int theTolerance) 
 		{ 
-			subscribeVariable(k,v,TYPE_INT); 
+			addVariable(k,v,TYPE_INT,theTolerance);
+			return *this; 
 		}
 
-		void subscribe(const char* k, float &v) 
+		SerialIndex& add(const char* k, int &v) 
+		{ 
+			addVariable(k,v,TYPE_INT,0); 
+			return *this; 
+		}
+
+		/* float */
+		SerialIndex& add(const char* k, float &v, float theTolerance) 
 		{
-			subscribeVariable(k,v,TYPE_FLOAT); 
+			addVariable(k,v,TYPE_FLOAT,theTolerance); 
+			return *this; 
 		} 
 
-		template<int N> void subscribe(const char* k, float (&v)[N]) 
+		SerialIndex& add(const char* k, float &v) 
 		{
-			subscribeArray(k,v,sizeof_array(v), TYPE_FLOAT_ARRAY);
+			addVariable(k,v,TYPE_FLOAT,0); 
+			return *this; 
+		} 
+
+		/* int-array */
+		template<int N> SerialIndex& add(const char* k, int (&v)[N]) 
+		{
+			addArray(k,v,sizeof_array(v), TYPE_INT_ARRAY);
+			return *this; 
 		}
 
-		template<int N> void subscribe(const char* k, char (&v)[N]) 
+		/* float-array */
+		template<int N> SerialIndex& add(const char* k, float (&v)[N]) 
 		{
-			subscribeArray(k,v,sizeof_array(v), TYPE_CHAR_ARRAY);
+			addArray(k,v,sizeof_array(v), TYPE_FLOAT_ARRAY);
+			return *this; 
 		}
 
-		template<int N> void subscribe(const char* k, int (&v)[N]) 
+		/* string */
+		template<int N> SerialIndex& add(const char* k, char (&v)[N]) 
 		{
-			subscribeArray(k,v,sizeof_array(v), TYPE_INT_ARRAY);
+			addArray(k,v,sizeof_array(v), TYPE_CHAR_ARRAY);
+			return *this; 
 		}
 
-
-		void begin(void);
-		void begin(long);
-		void begin(long,int);
-		void begin(long,int,int);
-		void update(void);
-		void read( boolean );
-  		void write( boolean );
-
-		void subscribe(const char* k, char* &v) 
+		SerialIndex& add(const char* k, char* &v) 
 		{
 			// TODO should not be used yet until I have figured out how to 
 			// update char* from inside evaluate().
-			// subscribeArray(k,&v,strlen(v),TYPE_STRING);
+			// addArray(k,&v,strlen(v),TYPE_STRING);
+			return *this; 
 		}
 
-		void io(const char* k, bool theIn, bool theOut) 
+		/* function */
+		SerialIndex& listen(const char* k, void (*t)(void)) 
+		{
+			Function *fn = new Function();
+			fn->index = (char *)malloc((strlen(k)+1) * sizeof(char));
+			strcpy(fn->index, k);
+			fn->fn = t;
+			functions[functions_size++] = fn;
+			return *this; 
+		}
+
+
+		SerialIndex& ping(char* k) {
+			Serialio.print(k);
+			Serialio.println(" pong");
+			return *this; 
+		}
+
+		SerialIndex& begin(void);
+		SerialIndex& begin(long);
+		SerialIndex& begin(long,int);
+		SerialIndex& begin(long,int,int);
+		void update(void);
+		SerialIndex& read( boolean );
+  		SerialIndex& write( boolean );
+
+		
+
+		SerialIndex& io(const char* k, bool theIn, bool theOut) 
 		{
 			Value* value = get(k);
 			if(value != NULL) {
 				value->in = theIn;
 				value->out = theOut;
 			}
+			return *this;
 		}
 
 
-		void in(char b) 
+		SerialIndex& in(char b) 
 		{
 			if(b >=' ') {
 				buffer[bufferindex++] = b;
@@ -162,45 +217,106 @@ class SerialIndex
 				evaluate(buffer);
 				bufferindex = 0;
 			}
+			return *this;
 		}
 
-		void out() 
+		SerialIndex& out() 
 		{
 			size_t i;
 			for(i=0;i<values_size;i++) {
 				Value *value = values[i];
+
 				if(value->out==true) {
 					switch(value->type) {
 						case(TYPE_INT):
-						Variable<int> *data = static_cast<Variable<int>*>(value->data);
-						if(value->lock == false) { /* block sending if we have just received an value-update */
-							if( (*data->now != data->then) ) {
-								Serialio.print(value->index);
-								Serialio.print("=");
-								Serialio.print(*data->now);
-								Serialio.print("\n\r");
+						{
+							Variable<int> *data = static_cast<Variable<int>*>(value->data);
+							if(value->lock == false) { /* block sending if we have just received a value-update */
+								if( abs(*data->now - data->then)>data->tolerance ) {
+									/* send variable via serial */
+									sendVariable(value->index, *data->now);
+									/* updated data's then value */
+									data->then = *data->now;
+								}
 							}
 						}
-						data->then = *data->now;
 						break;
-						// case(TYPE_FLOAT):break;
-						// case(TYPE_INT_ARRAY):break;
-						// case(TYPE_FLOAT_ARRAY):break;
-						// case(TYPE_CHAR_ARRAY):break;
+						case(TYPE_FLOAT):
+						{
+							Variable<float> *data = static_cast<Variable<float>*>(value->data);
+							if(value->lock == false) { /* block sending if we have just received a value-update */
+								if( abs(*data->now - data->then)>data->tolerance ) {
+									/* send variable via serial */
+									sendVariable(value->index, *data->now);
+									/* updated data's then value */
+									data->then = *data->now;
+								}
+							}
+						}
+						break;
+
+						case(TYPE_INT_ARRAY):
+						{
+							Array<int*> *data = static_cast<Array<int*>*>(value->data);
+							if(value->lock == false) {
+								size_t i;
+								size_t len = data->size;
+								for(i=0;i<len;i++) {
+									if(*(data->now+i) != *(data->then+i)) {
+										/* send data */
+										sendArray(value->index, data->now, len);
+										/* updated data's then array */
+										size_t j;
+										for(j=0;j<len;j++) {
+											*(data->then+j) = *(data->now+j);
+										}
+										break;
+									}
+								}
+								
+							}
+						}
+						break;
+						// TODO case(TYPE_FLOAT_ARRAY):break;
+						// TODO case(TYPE_CHAR_ARRAY):break;
 					}	
 				}
 				value->lock = false;
-			}	
+			}
+			return *this;
 		}
 
 
+		template<typename T>
+		SerialIndex& sendVariable(char* theIndex, T &t) {
+			Serialio.print(theIndex);
+			Serialio.print(DELIMITER);
+			Serialio.print(t);
+			Serialio.print("\n\r");
+			return *this;
+		}
+
+		template<typename T>
+		SerialIndex& sendArray(char* theIndex, T t, int theLen) {
+			Serialio.print(theIndex);
+			Serialio.print(DELIMITER);
+			Serialio.print("[");
+			size_t j;
+			for(j=0;j<theLen-1;j++) {
+				Serialio.print(*(t+j));
+				Serialio.print(',');
+			}
+			Serial.print(*(t+(theLen-1)));
+			Serialio.print("]\n\r");
+			return *this;
+		}
+
 		void evaluate(const char* input) 
 		{
-			const char* delimiter = "=";
 			char t[strlen(input)+1]; /* need to add +1 to make the input end with a \0 */
 			strcpy(t,input);
 			int i = strlen(t); /* store the total length of the string */
-			char* item = strtok(t,delimiter); /* split the string */
+			char* item = strtok(t,DELIMITER); /* split the string */
 			char key[strlen(t)]; /* declare a buffer for the key*/
 			char valueBuffer[i-strlen(t)]; /* declare a buffer for the value */ 
 			int n = 0;
@@ -214,7 +330,7 @@ class SerialIndex
 					if(value==NULL) {
 						return;
 					}
-					
+
 					if(value->in==false) {
 						return;
 					}
@@ -224,31 +340,48 @@ class SerialIndex
 					
 					if(strchr(item,'[')!=NULL) { /* if we find a [, lets assume we are dealing with an array*/
 						/* check if [ is the first character of the string to make sure it is an array */
-						// printf("is-array\n");
 						
 						switch(value->type) {
 							case(TYPE_INT_ARRAY):
 							{
 								Array<int*> *data = static_cast<Array<int*>*>(value->data);
 								int* arr = toArray(item,TYPE_INT_ARRAY)->i;
+								/* first element is the size of the array, hence i+1 below */
 								size_t size = (arr[0]<data->size) ? arr[0]:data->size;
 								size_t i;	
 								for(i=0;i<size;i++) {
 									*(data->now+i) = arr[i+1]==NULL ? *(data->now+i):arr[i+1];
 								}
-								//free(arr);
+								/* invoke trigger function if available */
+								(getFn(value->index))();
+
+								/* update then*/
+								size_t j;
+								for(j=0;j<data->size;j++) {
+									*(data->then+j) = *(data->now+j);
+								}
+								free(arr);
 							}
 							break;
 							case(TYPE_FLOAT_ARRAY):
 							{
 								Array<float*> *data = static_cast<Array<float*>*>(value->data);
 								float* arr = toArray(item,TYPE_FLOAT_ARRAY)->f;
+								/* first element here is the size of array arr, hence i+1 below */
 								size_t size = (arr[0]<data->size) ? arr[0]:data->size;
 								size_t i;	
 								for(i=0;i<size;i++) {
 									*(data->now+i) = arr[i+1]==NULL ? *(data->now+i):arr[i+1];
 								}
-								//free(arr);
+								/* invoke trigger function if available */
+								(getFn(value->index))();
+
+								/* update then*/
+								size_t j;
+								for(j=0;j<data->size;j++) {
+									*(data->then+j) = *(data->now+j);
+								}
+								free(arr);
 							}
 							break;
 						}
@@ -260,12 +393,20 @@ class SerialIndex
 								{
 									Variable<int> *data = static_cast<Variable<int>*>(value->data);
 									*data->now = atoi(item);
+									/* invoke trigger function if available */
+									(getFn(value->index))();
+									/* update then */
+									data->then = *data->now;
 								}
 								break;
 								case(TYPE_FLOAT):
 								{
 									Variable<float> *data = static_cast<Variable<float>*>(value->data);
 									*data->now = atof(item);
+									/* invoke trigger function if available */
+									(getFn(value->index))();
+									/* update then */
+									data->then = *data->now;
 								}
 								break;
 							}	
@@ -275,7 +416,7 @@ class SerialIndex
 								case(TYPE_STRING):
 								{
 									// Array<char**> *data = static_cast<Array<char**>*>(value->data);
-									// TODO see subscribe()
+									// TODO see add()
 									// can't assign new value/pointer to data->now
 								}
 								break;
@@ -294,7 +435,7 @@ class SerialIndex
 					strcpy(valueBuffer,item);
 					break;
 				}
-				item = strtok(NULL,delimiter);
+				item = strtok(NULL,DELIMITER);
 			}
 			delete item;
 		}
@@ -324,8 +465,8 @@ class SerialIndex
 		  union Format format;
 
 		  switch(theType) {
-		  	case(TYPE_INT_ARRAY):format.i = new int[count+1]; format.i[index++] = count; break;
 		  	case(TYPE_FLOAT_ARRAY):format.f = new float[count+1]; format.f[index++] = count; break;
+		  	case(TYPE_INT_ARRAY):format.i = new int[count+1]; format.i[index++] = count; break;
 		  	case(TYPE_CHAR_ARRAY):format.c = new char[count+1]; format.c[index++] = count;break;
 		  	default: return NULL;
 		  }
@@ -358,6 +499,21 @@ class SerialIndex
 			return NULL;
 		}
 
+		fptr getFn(const char* k) 
+		{
+			size_t i;
+			for(i=0;i<functions_size;i++) {
+				Function *fn = functions[i];
+				if(strcmp (fn->index, k)==0) {
+					return fn->fn;
+				}
+
+			}
+			return &nil;
+		}
+
+		static void nil() {}
+
 	private:
 		Stream &Serialio;
 		bool isWrite;
@@ -369,6 +525,9 @@ class SerialIndex
 		int values_size;
 		int values_capacity;
 
+		Function** functions;
+		int functions_size;
+		int functions_capacity;
 
 		 /* currently the capacity of the array containing all values is fixed but should be dynamic in the future. */
 		void resize() 
@@ -378,32 +537,39 @@ class SerialIndex
 			} else if (values_size==values_capacity) {
 				// TODO realloc
 			}
+
+			if(functions_size==0) {
+				functions = ( Function** )malloc(functions_capacity * sizeof(Function*));
+			} else if (functions_size==functions_capacity) {
+				// TODO realloc
+			}
 		}
 
-		template<class T> void subscribeArray(const char* k, T t, int s, char c) 
+		template<class T> void addVariable( const char* k, T &t, char c, float theTolerance) 
+		{
+			Value *value = new Value(k,c);
+			Variable<T> *data = new Variable<T>();
+			data->now = &t;
+			data->then = t;
+			data->tolerance = theTolerance;
+			value->data = data;
+			values[values_size++] = value;
+		}
+
+		template<class T> void addArray(const char* k, T t, int s, char c) 
 		{
 			Value *value = new Value(k,c);
 			Array<T> *data = new Array<T>();
 			value->data = data;
 			data->now = t;
 			data->size = s;
-			data->then = (T)malloc(data->size * sizeof(T));
+			data->then = (T)malloc((data->size) * sizeof(T));
 			memcpy(data->then, data->now, data->size);
 			value->data = data;
 			values[values_size++] = value;
 		}
 
-		template<class T> void subscribeVariable( const char* k, T &t, char c) 
-		{
-			Value *value = new Value(k,c);
-			Variable<T> *data = new Variable<T>();
-			data->now = &t;
-			data->then = t;
-			value->data = data;
-			values[values_size++] = value;
-		}
-
-
+		
 		
 		
 };

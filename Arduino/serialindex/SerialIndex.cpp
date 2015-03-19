@@ -2,6 +2,7 @@
 
 #define BAUDRATE 9600
 #define CAPACITY 2
+#define FCAPACITY 2
 #define BUFFERSIZE 16
 
 
@@ -11,25 +12,29 @@
 	begin();
 }
 
-void SerialIndex::begin(void)
+SerialIndex& SerialIndex::begin(void)
 {
-	begin(BAUDRATE,CAPACITY,BUFFERSIZE);
+	return begin(BAUDRATE,CAPACITY,BUFFERSIZE);
 }
 
-void SerialIndex::begin(long theBaudrate)
+SerialIndex& SerialIndex::begin(long theBaudrate)
 {
-	begin(theBaudrate,CAPACITY,BUFFERSIZE);
+	return begin(theBaudrate,CAPACITY,BUFFERSIZE);
 }
 
-void SerialIndex::begin(long theBaudrate, int theCapacity)
+SerialIndex& SerialIndex::begin(long theBaudrate, int theCapacity)
 {
-	begin(theBaudrate,theCapacity,BUFFERSIZE);
+	return begin(theBaudrate,theCapacity,BUFFERSIZE);
 }
 
-void SerialIndex::begin(long theBaudrate, int theCapacity, int theBufferSize)
+SerialIndex& SerialIndex::begin(long theBaudrate, int theCapacity, int theBufferSize)
 {
 	values_size = 0;
 	values_capacity = theCapacity;
+
+	functions_size = 0;
+	functions_capacity = FCAPACITY;
+
 	resize();
 
 	
@@ -40,22 +45,24 @@ void SerialIndex::begin(long theBaudrate, int theCapacity, int theBufferSize)
 	isWrite = true;
 	buffer = new char[theBufferSize];
 
+	return *this;
 }
 
 
-void SerialIndex::read( boolean b )
+SerialIndex& SerialIndex::read( boolean b )
 {
 	isRead = b;
+	return *this;
 }
 
-void SerialIndex::write( boolean b )
+SerialIndex& SerialIndex::write( boolean b )
 {
 	isWrite = b;
+	return *this;
 }
 
 void SerialIndex::update(void)
 {
-
 	if(isRead==true) {
 		if( Serialio.available( ) ) {
 			char b;
@@ -72,5 +79,5 @@ void SerialIndex::update(void)
 }
 
 
-SerialIndex Index( Serial);
+SerialIndex Index( Serial );
 

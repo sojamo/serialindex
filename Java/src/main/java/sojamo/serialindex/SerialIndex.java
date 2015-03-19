@@ -28,6 +28,14 @@ public final class SerialIndex extends Observable {
 	private final int queueCapacity = 512;
 	private final Object target;
 
+	static public SerialIndex begin( final Object theTarget , final String thePort , final int theBaudrate ) {
+		return new SerialIndex( theTarget , thePort , theBaudrate );
+	}
+
+	static public SerialIndex begin( final String thePort , final int theBaudrate ) {
+		return new SerialIndex( thePort , theBaudrate );
+	}
+
 	public SerialIndex( String thePort , int theBaudrate ) {
 		this( null , thePort , theBaudrate );
 	}
@@ -42,8 +50,6 @@ public final class SerialIndex extends Observable {
 					String[] strs = ( ( String ) arg ).split( delimiter );
 					if ( strs.length == 2 ) {
 						queue.offer( strs );
-						setChanged( );
-						notifyObservers( strs );
 					}
 				}
 			} );
@@ -70,17 +76,43 @@ public final class SerialIndex extends Observable {
 		}
 	}
 
+	public SerialIndex listen( final String theIndex ) {
+
+		return listen( theIndex , target , theIndex );
+	}
+
+	public SerialIndex listen( String theIndex , Object theTarget ) {
+		return listen( theIndex , theTarget , theIndex );
+	}
+
+	public SerialIndex listen( final String theIndex , final Object theTarget , final String theMethod ) {
+		addObserver( new Observer( ) {
+
+			@Override public void update( Observable o , Object arg ) {
+				if ( arg instanceof String[] ) {
+					String[] strs = ( String[] ) arg;
+					if ( strs[ 0 ].equals( theIndex ) ) {
+						/* TODO check if method has an argument and invoke with argument instead of null */
+						invoke( theTarget , theMethod , null );
+					}
+				}
+			}
+		} );
+		return this;
+	}
+
 	public void draw( ) {
 		update( );
 	}
 
-	public SerialIndex subscribe( String theIndex , Object theValue ) {
-		subscribe( theIndex );
-		indices.get( theIndex ).setNow( theValue );
+	public SerialIndex add( String ... theIndices ) {
+		for ( String s : theIndices ) {
+			add( s );
+		}
 		return this;
 	}
 
-	public SerialIndex subscribe( String theIndex ) {
+	public SerialIndex add( String theIndex ) {
 		Object member = evaluateMember( target , theIndex );
 		if ( member != null && member instanceof Field ) {
 			try {
@@ -118,13 +150,49 @@ public final class SerialIndex extends Observable {
 			for ( String[] data : c ) {
 				Value value = indices.get( data[ 0 ] );
 				if ( value != null ) {
-					value.setNow( i( data[ 1 ] ) );
-					value.setThen( i( data[ 1 ] ) );
+					/* checks type of data received and parses accordingly */
+					parse( value , data[ 1 ] );
+					invoke( target , data[ 0 ] , value.getNow( ) );
+					setChanged( );
+					notifyObservers( data );
 				}
-				invoke( target , data[ 0 ] , i( data[ 1 ] ) );
-				// TODO call Callbacks
+
 			}
 		}
+	}
+
+	private void parse( Value theValue , String theData ) {
+		Object result = cast( theValue.getType( ) , theData );
+		if ( result != null ) {
+			theValue.setNow( result );
+			theValue.setThen( result );
+		}
+	}
+
+	private Object cast( char theType , String theData ) {
+		switch ( theType ) {
+		case ( 'i' ):
+			return i( theData );
+		case ( 'f' ):
+			return f( theData );
+		case ( 's' ):
+			return s( theData );
+		case ( 'I' ):
+			String[] is = theData.replaceAll( "[^0-9,]" , "" ).split( "," );
+			int[] iarr = new int[ is.length ];
+			for ( int i = 0 ; i < iarr.length ; i++ ) {
+				iarr[ i ] = i( is[ i ] );
+			}
+			return iarr;
+		case ( 'F' ):
+			String[] fs = theData.replaceAll( "[^0-9,.]" , "" ).split( "," );
+			float[] farr = new float[ fs.length ];
+			for ( int i = 0 ; i < farr.length ; i++ ) {
+				farr[ i ] = f( fs[ i ] );
+			}
+			return farr;
+		}
+		return null;
 	}
 
 	public String toString( ) {
@@ -132,6 +200,7 @@ public final class SerialIndex extends Observable {
 	}
 
 	public boolean send( String theString ) {
+		/* TODO check if String ends with \n and trim if necessary */
 		if ( serial != null ) {
 			return serial.writeString( theString + "\n" );
 		} else {
@@ -149,11 +218,21 @@ public final class SerialIndex extends Observable {
 		return Collections.unmodifiableMap( indices );
 	}
 
+	public void stop( ) {
+		serial.dispose( );
+	}
+
+	public void dispose( ) {
+		stop( );
+	}
+
 	static public void invoke( Object theObject , String theMember , Object ... theParams ) {
-		Class[] cs = new Class[ theParams.length ];
-		for ( int i = 0 ; i < theParams.length ; i++ ) {
-			Class c = theParams[ i ].getClass( );
-			cs[ i ] = classmap.containsKey( c ) ? classmap.get( c ) : c;
+		Class[] cs = theParams == null ? new Class[ 0 ] : new Class[ theParams.length ];
+		if ( theParams != null ) {
+			for ( int i = 0 ; i < theParams.length ; i++ ) {
+				Class c = theParams[ i ].getClass( );
+				cs[ i ] = classmap.containsKey( c ) ? classmap.get( c ) : c;
+			}
 		}
 		try {
 			final Field f = theObject.getClass( ).getDeclaredField( theMember );

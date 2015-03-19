@@ -144,4 +144,19 @@ public class Serial extends Observable implements SerialPortEventListener {
 		}
 
 	}
+
+	public void stop( ) {
+		try {
+			port.closePort( );
+		} catch ( SerialPortException e ) {
+			// ignored
+		}
+		inBuffer = 0;
+		readOffset = 0;
+	}
+
+	public void dispose( ) {
+		stop( );
+	}
+
 }

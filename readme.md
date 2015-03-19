@@ -5,32 +5,32 @@ The implementation of SerialIndex enables applications to update the value of a 
 ``` Processing
 
 	import sojamo.serialindex.*;
-	import jssc.*;
+	import processing.serial.*;
 
 	SerialIndex index;
 
-	int var1 = 0;
+	int dim = 0; // outgoing to Arduino
+	float n = 0; // incoming from Arduino
 
 	void setup() {
 	  size(300,200);
-	  index = new SerialIndex(this, "/dev/tty.usbmodem1421",9600);
-	  index.subscribe("var1");
-	  background(0);
+	  SerialIndex.begin(this, "/dev/tty.usbmodem1421",57600).add("n").add("dim").listen("n");
 	}
 
 	void draw() {
-	  fill(0);
-	  rect(0,0,width,height/2);
-	  fill(255);
-	  text("current value: "+var1, 20 , height/2 - 20);
+	  background(map(dim,0,50,0,255));
+	  noStroke();
+	  fill(0,255,128);
+	  ellipse(width/2,height/2,n,n); 
 	}
 
-	void mousePressed() {
-	  var1 = int(random(100,500));
-	  fill(0);
-	  rect(0,height/2,width,height/2);
-	  fill(255);
-	  text("most recent update transmitted: "+var1, 20,height/2 + 20);
+	void mouseDragged() {
+	  dim = int(constrain(map(mouseX,0,width,0,50),0,50));
+	  println(dim);
+	}
+
+	void n() {
+	  println("got n",n);
 	}
 ```
 
@@ -40,32 +40,32 @@ The implementation of SerialIndex enables applications to update the value of a 
 
 	#include <SerialIndex.h>
 
-	int var1 = 500;
-	long t1, t2;
+	int n; // outgoing to Processing
+	int dim = 0; // incoming from Processing
+	const int led = 11;
 
 	void setup() {
-	  Index.begin(9600);
-	  Index.subscribe("var1", var1);
+	  Index.begin(57600).add("n",n,4).add("dim", dim).listen("dim", &fdim);
+	  pinMode(led, OUTPUT);
 	}
 
 	void loop() {
 	  
-	  // check Index.updated every 20ms
-	  if ((millis() - t1) >= 20) {
-	    Index.update();
-	    t1 = millis();
-	  }
+	  n = analogRead(A0);
 	  
-	  // increment var1 every 2 seconds
-	  if ((millis() - t2) >= 2000) {
-	    var1++;
-	    t2 = millis();
-	  }
-
+	  // update SerialIndex
+	  Index.update();
+	  
 	  // add some delay-time
 	  delay(10);
+	}
+
+	/* fdim will be the callback function for
+	 * changes made to variable dim */
+	void fdim() {
+	  analogWrite(led, dim);
 	}
 ```
 
 
-_4 March 2015_
+_19 March 2015_

@@ -7,7 +7,7 @@
 #######################################
 
 SerialIndex	KEYWORD3
-Index	KEYWORD3
+Index		KEYWORD3
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -17,7 +17,8 @@ Index	KEYWORD3
 begin		KEYWORD2
 io			KEYWORD2
 update		KEYWORD2
-subscribe	KEYWORD2
+add			KEYWORD2
+listen		KEYWORD2
 read		KEYWORD2 
 write		KEYWORD2 
 
