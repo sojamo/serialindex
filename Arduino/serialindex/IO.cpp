@@ -597,6 +597,9 @@ void IO::eval_int_array_nth(char *s, char *e, size_t i)
 	int *array = (int *) values[ikey];
 	int value = 0;
 
+	if (*s == ']' && *e == ']')
+		return;
+
 	value = atois(s, e);
 	memcpy(&array[i], &value, sizeof(value));
 }
@@ -619,6 +622,9 @@ void IO::eval_float_array_nth(char *s, char *e, size_t i)
 {
 	float *array = (float *) values[ikey];
 	float value = 0;
+
+	if (*s == ']' && *e == ']')
+		return;
 
 	value = strtods(s, e, NULL);
 	memcpy(&array[i], &value, sizeof(value));
