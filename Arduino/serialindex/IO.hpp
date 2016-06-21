@@ -93,7 +93,7 @@ public:
 	ValidateResult validate_int_slice(char *s, char *e);
 	ValidateResult validate_float_slice(char *s, char *e);
 
-	void           eval(char *s);
+	void           eval(char *s, char *e);
 	void           eval_int(char *s, char *e);
 	void           eval_float(char *s, char *e);
 	void           eval_string(char *s, char *e);

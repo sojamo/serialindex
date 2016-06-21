@@ -197,7 +197,7 @@ void IO::read_int(char c)
 {
 	if (is_eol()) {
 		if (validate_int(&buffer[0], &buffer[ibuffer - EOL_LEN]) == ValidateResult::Ok) {
-			eval_int(&buffer[0], &buffer[ibuffer - EOL_LEN]);
+			eval(&buffer[0], &buffer[ibuffer - EOL_LEN]);
 			return;
 		}
 
@@ -209,7 +209,7 @@ void IO::read_float(char c)
 {
 	if (is_eol()) {
 		if (validate_float(&buffer[0], &buffer[ibuffer - EOL_LEN]) == ValidateResult::Ok) {
-			eval_float(&buffer[0], &buffer[ibuffer - EOL_LEN]);
+			eval(&buffer[0], &buffer[ibuffer - EOL_LEN]);
 			return;
 		}
 
@@ -222,7 +222,7 @@ void IO::read_string(char c)
 	if (is_eol()) {
 		switch (validate_string(&buffer[0], &buffer[ibuffer - EOL_LEN])) {
 		case ValidateResult::Ok:
-			eval_string(&buffer[0], &buffer[ibuffer - EOL_LEN]);
+			eval(&buffer[0], &buffer[ibuffer - EOL_LEN]);
 
 		case ValidateResult::Continue:
 			return;
@@ -259,7 +259,7 @@ void IO::read_int_array(char c)
 {
 	if (c == ']') {
 		if (validate_int_array(&buffer[0], &buffer[ibuffer]) == ValidateResult::Ok) {
-			eval_int_array(&buffer[0], &buffer[ibuffer]);
+			eval(&buffer[0], &buffer[ibuffer]);
 			return;
 		}
 
@@ -271,7 +271,7 @@ void IO::read_float_array(char c)
 {
 	if (c == ']') {
 		if (validate_float_array(&buffer[0], &buffer[ibuffer]) == ValidateResult::Ok) {
-			eval_float_array(&buffer[0], &buffer[ibuffer]);
+			eval(&buffer[0], &buffer[ibuffer]);
 			return;
 		}
 
@@ -305,7 +305,7 @@ void IO::read_int_slice_array(char c)
 {
 	if (c == '}') {
 		if (validate_int_slice_array(&buffer[0], &buffer[ibuffer]) == ValidateResult::Ok)
-			eval_int_slice_array(&buffer[0], &buffer[ibuffer]);
+			eval(&buffer[0], &buffer[ibuffer]);
 
 		context = Context::Skip;
 	}
@@ -315,7 +315,7 @@ void IO::read_float_slice_array(char c)
 {
 	if (c == '}') {
 		if (validate_float_slice_array(&buffer[0], &buffer[ibuffer]) == ValidateResult::Ok)
-			eval_float_slice_array(&buffer[0], &buffer[ibuffer]);
+			eval(&buffer[0], &buffer[ibuffer]);
 
 		context = Context::Skip;
 	}
@@ -503,17 +503,53 @@ ValidateResult IO::validate_float_slice(char *s, char *e)
 	return ValidateResult::Invalid;
 }
 
+void IO::eval(char *s, char *e)
+{
+	switch (context) {
+	case Context::IntValue:
+		eval_int(s, e);
+		break;
+
+	case Context::FloatValue:
+		eval_float(s, e);
+		break;
+
+	case Context::StringValue:
+		eval_string(s, e);
+		break;
+
+	case Context::IntArrayValue:
+		eval_int_array(s, e);
+		break;
+
+	case Context::FloatArrayValue:
+		eval_float_array(s, e);
+		break;
+
+	case Context::IntSliceArrayValue:
+		eval_int_slice_array(s, e);
+		break;
+
+	case Context::FloatSliceArrayValue:
+		eval_float_slice_array(s, e);
+		break;
+
+	default:
+		return;
+	}
+
+	if (functions[ikey])
+		functions[ikey]();
+
+	reset_context();
+}
+
 void IO::eval_int(char *s, char *e)
 {
 	int value;
 
 	value = atois(s, e);
 	memcpy(values[ikey], &value, sizeof(value));
-
-	if (functions[ikey])
-		functions[ikey]();
-
-	reset_context();
 }
 
 void IO::eval_float(char *s, char *e)
@@ -522,11 +558,6 @@ void IO::eval_float(char *s, char *e)
 	
 	value = strtods(s, e, NULL);
 	memcpy(values[ikey], &value, sizeof(value));
-
-	if (functions[ikey])
-		functions[ikey]();
-
-	reset_context();
 }
 
 void IO::eval_string(char *s, char *e)
@@ -540,11 +571,6 @@ void IO::eval_string(char *s, char *e)
 
 	*e = 0;
 	strcpy(value, s);
-
-	if (functions[ikey])
-		functions[ikey]();
-
-	reset_context();
 }
 
 void IO::eval_int_array(char *s, char *e)
@@ -559,11 +585,6 @@ void IO::eval_int_array(char *s, char *e)
 			i++;
 		}
 	}
-
-	if (functions[ikey])
-		functions[ikey]();
-
-	reset_context();
 }
 
 void IO::eval_int_array_nth(char *s, char *e, size_t i)
@@ -587,11 +608,6 @@ void IO::eval_float_array(char *s, char *e)
 			i++;
 		}
 	}
-
-	if (functions[ikey])
-		functions[ikey]();
-
-	reset_context();
 }
 
 void IO::eval_float_array_nth(char *s, char *e, size_t i)
@@ -615,11 +631,6 @@ void IO::eval_int_slice_array(char *s, char *e)
 			i++;
 		}
 	}
-
-	if (functions[ikey])
-		functions[ikey]();
-
-	reset_context();
 }
 
 void IO::eval_float_slice_array(char *s, char *e)
@@ -634,11 +645,6 @@ void IO::eval_float_slice_array(char *s, char *e)
 			i++;
 		}
 	}
-
-	if (functions[ikey])
-		functions[ikey]();
-
-	reset_context();
 }
 
 void IO::eval_int_slice(char *s, char *e)
