@@ -79,6 +79,11 @@ void IO::read(char c)
 {
 	buffer[ibuffer++] = c;
 
+	if (ibuffer >= BUFFERSIZE) {
+		ibuffer = 0;
+		context = Context::Skip;
+	}
+
 	switch (context) {
 	case Context::Key:
 		read_key(c);
