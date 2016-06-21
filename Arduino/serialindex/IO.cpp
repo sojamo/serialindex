@@ -263,8 +263,8 @@ skip:
 void IO::read_int_array(char c)
 {
 	if (c == ']') {
-		if (validate_int_array(&buffer[0], &buffer[ibuffer]) == ValidateResult::Ok) {
-			eval(&buffer[0], &buffer[ibuffer]);
+		if (validate_int_array(&buffer[1], &buffer[ibuffer + 1]) == ValidateResult::Ok) {
+			eval(&buffer[1], &buffer[ibuffer + 1]);
 			return;
 		}
 
@@ -275,8 +275,8 @@ void IO::read_int_array(char c)
 void IO::read_float_array(char c)
 {
 	if (c == ']') {
-		if (validate_float_array(&buffer[0], &buffer[ibuffer]) == ValidateResult::Ok) {
-			eval(&buffer[0], &buffer[ibuffer]);
+		if (validate_float_array(&buffer[1], &buffer[ibuffer + 1]) == ValidateResult::Ok) {
+			eval(&buffer[1], &buffer[ibuffer + 1]);
 			return;
 		}
 
@@ -309,8 +309,8 @@ skip:
 void IO::read_int_slice_array(char c)
 {
 	if (c == '}') {
-		if (validate_int_slice_array(&buffer[0], &buffer[ibuffer]) == ValidateResult::Ok)
-			eval(&buffer[0], &buffer[ibuffer]);
+		if (validate_int_slice_array(&buffer[1], &buffer[ibuffer + 1]) == ValidateResult::Ok)
+			eval(&buffer[1], &buffer[ibuffer + 1]);
 
 		context = Context::Skip;
 	}
@@ -319,8 +319,8 @@ void IO::read_int_slice_array(char c)
 void IO::read_float_slice_array(char c)
 {
 	if (c == '}') {
-		if (validate_float_slice_array(&buffer[0], &buffer[ibuffer]) == ValidateResult::Ok)
-			eval(&buffer[0], &buffer[ibuffer]);
+		if (validate_float_slice_array(&buffer[1], &buffer[ibuffer + 1]) == ValidateResult::Ok)
+			eval(&buffer[1], &buffer[ibuffer + 1]);
 
 		context = Context::Skip;
 	}
@@ -389,7 +389,7 @@ ValidateResult IO::validate_int_array(char *s, char *e)
 	char *pp, *p;
 	size_t i = 0;
 
-	for (pp = p = s + 1; p <= e; p++) {
+	for (pp = p = s; p < e; p++) {
 		if (*p == ',' || *p == ']') {
 			if (validate_int(pp, p) != ValidateResult::Ok)
 				return ValidateResult::Invalid;
@@ -407,7 +407,7 @@ ValidateResult IO::validate_float_array(char *s, char *e)
 	char *pp, *p;
 	size_t i = 0;
 
-	for (pp = p = s + 1; p <= e; p++) {
+	for (pp = p = s; p < e; p++) {
 		if (*p == ',' || *p == ']') {
 			if (validate_float(pp, p) != ValidateResult::Ok)
 				return ValidateResult::Invalid;
@@ -425,7 +425,7 @@ ValidateResult IO::validate_int_slice_array(char *s, char *e)
 	char *pp, *p;
 	size_t i = 0;
 
-	for (pp = p = s + 1; p <= e; p++) {
+	for (pp = p = s; p < e; p++) {
 		if (*p == ',' || *p == '}') {
 			if (validate_int_slice(pp, p) != ValidateResult::Ok)
 				return ValidateResult::Invalid;
@@ -443,7 +443,7 @@ ValidateResult IO::validate_float_slice_array(char *s, char *e)
 	char *pp, *p;
 	size_t i = 0;
 
-	for (pp = p = s + 1; p <= e; p++) {
+	for (pp = p = s; p < e; p++) {
 		if (*p == ',' || *p == '}') {
 			if (validate_float_slice(pp, p) != ValidateResult::Ok)
 				return ValidateResult::Invalid;
@@ -583,7 +583,7 @@ void IO::eval_int_array(char *s, char *e)
 	char *pp, *p;
 	size_t i = 0;
 
-	for (pp = p = s + 1; p <= e; p++) {
+	for (pp = p = s; p < e; p++) {
 		if (*p == ',' || *p == ']') {
 			eval_int_array_nth(pp, p, i);
 			pp = p + 1;
@@ -606,7 +606,7 @@ void IO::eval_float_array(char *s, char *e)
 	char *pp, *p;
 	size_t i = 0;
 
-	for (pp = p = s + 1; p <= e; p++) {
+	for (pp = p = s; p < e; p++) {
 		if (*p == ',' || *p == ']') {
 			eval_float_array_nth(pp, p, i);
 			pp = p + 1;
@@ -629,7 +629,7 @@ void IO::eval_int_slice_array(char *s, char *e)
 	char *pp, *p;
 	size_t i = 0;
 
-	for (pp = p = s + 1; p <= e; p++) {
+	for (pp = p = s; p < e; p++) {
 		if (*p == ',' || *p == '}') {
 			eval_int_slice(pp, p);
 			pp = p + 1;
@@ -643,7 +643,7 @@ void IO::eval_float_slice_array(char *s, char *e)
 	char *pp, *p;
 	size_t i = 0;
 
-	for (pp = p = s + 1; p <= e; p++) {
+	for (pp = p = s; p < e; p++) {
 		if (*p == ',' || *p == '}') {
 			eval_float_slice(pp, p);
 			pp = p + 1;
