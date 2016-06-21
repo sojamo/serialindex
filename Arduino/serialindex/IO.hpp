@@ -1,20 +1,7 @@
 #ifndef IO_HPP
 #define IO_HPP
 
-#if defined(ARDUINO)
-	#if ARDUINO >= 100
-		#include "Arduino.h"
-	#else
-		#include "WProgram.h"
-	#endif
-#else
-	#include <stdlib.h>
-	#include <string.h>
-	#include <stdio.h>
-	#include <stdint.h>
-	#include <ctype.h>
-#endif
-
+#include "util.h"
 
 #define BAUDRATE       (9600)
 #define CAPACITY       (6)
@@ -135,7 +122,6 @@ private:
 	size_t         find_key(const char *s, const char *e);
 	void           reset_context(void);
 	bool           is_eol();
-	bool           is_slice_range_delimiter(const char *s);
 
 	template<class T>
 	IO&            add(const char *k, T &v, Type t);

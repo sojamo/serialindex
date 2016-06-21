@@ -1,13 +1,9 @@
 #include "IO.hpp"
 
-#define LEN(x) (sizeof(x) / sizeof(x[0]))
-
 static const char   KV_DELIMITER                = '=';
 static const char   EOL[]                       = "\r\n";
 static const char   SLICE_DELIMITER             = '=';
-static const char   SLICE_RANGE_DELIMITER[]     = "..";
 static const size_t EOL_LEN                     = LEN(EOL) - 1;
-static const size_t SLICE_RANGE_DELIMITER_LEN   = LEN(SLICE_RANGE_DELIMITER) - 1;
 
 IO::IO()
 {
@@ -510,13 +506,8 @@ ValidateResult IO::validate_float_slice(char *s, char *e)
 void IO::eval_int(char *s, char *e)
 {
 	int value;
-	char pe;
 
-	pe = *e;
-	*e = 0;
-	value = atoi(s);
-	*e = pe;
-
+	value = atois(s, e);
 	memcpy(values[ikey], &value, sizeof(value));
 
 	if (functions[ikey])
@@ -528,13 +519,8 @@ void IO::eval_int(char *s, char *e)
 void IO::eval_float(char *s, char *e)
 {
 	float value;
-	char pe;
 	
-	pe = *e;
-	*e = 0;
-	value = strtod(s, NULL);
-	*e = pe;
-
+	value = strtods(s, e, NULL);
 	memcpy(values[ikey], &value, sizeof(value));
 
 	if (functions[ikey])
@@ -545,17 +531,15 @@ void IO::eval_float(char *s, char *e)
 
 void IO::eval_string(char *s, char *e)
 {
-	char tmp;
+	char *value = (char *) values[ikey];
 
 	if (*s == '\'' || *s == '"') {
 		s += 1;
 		e -= 1;
 	}
 
-	tmp = *e;
 	*e = 0;
-	strcpy((char *) values[ikey], s);
-	*e = tmp;
+	strcpy(value, s);
 
 	if (functions[ikey])
 		functions[ikey]();
@@ -584,14 +568,10 @@ void IO::eval_int_array(char *s, char *e)
 
 void IO::eval_int_array_nth(char *s, char *e, size_t i)
 {
-	char pe = *e;
 	int *array = (int *) values[ikey];
 	int value = 0;
 
-	*e = 0;
-	value = atoi(s);
-	*e = pe;
-
+	value = atois(s, e);
 	memcpy(&array[i], &value, sizeof(value));
 }
 
@@ -616,14 +596,10 @@ void IO::eval_float_array(char *s, char *e)
 
 void IO::eval_float_array_nth(char *s, char *e, size_t i)
 {
-	char pe = *e;
 	float *array = (float *) values[ikey];
 	float value = 0;
 
-	*e = 0;
-	value = strtod(s, NULL);
-	*e = pe;
-
+	value = strtods(s, e, NULL);
 	memcpy(&array[i], &value, sizeof(value));
 }
 
@@ -672,7 +648,6 @@ void IO::eval_int_slice(char *s, char *e)
 	int value = 0;
 	size_t start = 0, end = 0;
 	size_t i;
-	char tmp;
 
 	for (p = s; p < e; p++) {
 		if (*p == SLICE_DELIMITER)
@@ -682,30 +657,16 @@ void IO::eval_int_slice(char *s, char *e)
 	}
 
 	if (cp) {
-		if (cp > s) {
-			tmp = *cp;
-			*cp = 0;
-			start = atoi(s);
-			*cp = tmp;
-		}
+		if (cp > s)
+			start = atois(s, cp);
 
-		if (cp < ep - SLICE_RANGE_DELIMITER_LEN) {
-			tmp = *ep;
-			*ep = 0;
-			end = atoi(cp + SLICE_RANGE_DELIMITER_LEN);
-			*ep = tmp;
-		}
+		if (cp < ep - SLICE_RANGE_DELIMITER_LEN)
+			end = atois(cp + SLICE_RANGE_DELIMITER_LEN, ep);
 	} else {
-		tmp = *ep;
-		*ep = 0;
-		start = atoi(s);
-		*ep = tmp;
+		start = atois(s, ep);
 	}
 
-	tmp = *e;
-	*e = 0;
-	value = atoi(ep + 1);
-	*e = tmp;
+	value = atois(ep + 1, e);
 
 	if (end) {
 		for (i = start; i < end; i++)
@@ -722,7 +683,6 @@ void IO::eval_float_slice(char *s, char *e)
 	float value = 0;
 	size_t start = 0, end = 0;
 	size_t i;
-	char tmp;
 
 	for (p = s; p < e; p++) {
 		if (*p == SLICE_DELIMITER)
@@ -732,30 +692,16 @@ void IO::eval_float_slice(char *s, char *e)
 	}
 
 	if (cp) {
-		if (cp > s) {
-			tmp = *cp;
-			*cp = 0;
-			start = atoi(s);
-			*cp = tmp;
-		}
+		if (cp > s)
+			start = atois(s, cp);
 
-		if (cp < ep - SLICE_RANGE_DELIMITER_LEN) {
-			tmp = *ep;
-			*ep = 0;
-			end = atoi(cp + SLICE_RANGE_DELIMITER_LEN);
-			*ep = tmp;
-		}
+		if (cp < ep - SLICE_RANGE_DELIMITER_LEN)
+			end = atois(cp, ep);
 	} else {
-		tmp = *ep;
-		*ep = 0;
-		start = atoi(s);
-		*ep = tmp;
+		start = atois(s, ep);
 	}
 
-	tmp = *e;
-	*e = 0;
-	value = strtod(ep + 1, NULL);
-	*e = tmp;
+	value = strtods(ep + 1, e, NULL);
 
 	if (end) {
 		for (i = start; i < end; i++)
@@ -808,16 +754,4 @@ size_t IO::find_key(const char *start, const char *end)
 	}
 
 	return -1;
-}
-
-bool IO::is_slice_range_delimiter(const char *s)
-{
-	size_t i;
-
-	for (i = 0; i < SLICE_RANGE_DELIMITER_LEN; i++) {
-		if (s[i] != SLICE_RANGE_DELIMITER[i])
-			return false;
-	}
-
-	return true;
 }
