@@ -15,6 +15,7 @@ floats=[1.1.1,2.3]
 floats={12.3}
 floats={1...2=12.3}
 floats=[11.1.2,3.3]
+string=This is a really long string!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Test Variations of Complete Data
 string=
