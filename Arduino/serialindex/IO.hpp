@@ -134,6 +134,9 @@ IO& IO::add(const char *k, T &v, Type t)
 	if (!k || nkeys >= capacity)
 		goto out;
 
+	if (find_key(k) < SIZE_MAX)
+		goto out;
+
 	types[nkeys] = t;
 	keys[nkeys] = k;
 	values[nkeys] = &v;
