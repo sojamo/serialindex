@@ -467,14 +467,15 @@ ValidateResult IO::validate_int_slice(char *s, char *e)
 			ep = p;
 		} else if (is_slice_range_delimiter(p)) {
 			if (cp)
-				return ValidateResult::Invalid;
+				goto invalid;
 			cp = p;
 			p += SLICE_RANGE_DELIMITER_LEN - 1;
 		} else if (!isdigit(*p)) {
-			return ValidateResult::Invalid;
+			goto invalid;
 		}
 	}
 
+invalid:
 	return ValidateResult::Invalid;
 }
 
@@ -492,14 +493,15 @@ ValidateResult IO::validate_float_slice(char *s, char *e)
 			ep = p;
 		} else if (is_slice_range_delimiter(p)) {
 			if (cp)
-				return ValidateResult::Invalid;
+				goto invalid;
 			cp = p;
 			p += SLICE_RANGE_DELIMITER_LEN - 1;
 		} else if (!isdigit(*p)) {
-			return ValidateResult::Invalid;
+			goto invalid;
 		}
 	}
 
+invalid:
 	return ValidateResult::Invalid;
 }
 
