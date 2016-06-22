@@ -457,19 +457,19 @@ ValidateResult IO::validate_float_slice_array(char *s, char *e)
 ValidateResult IO::validate_int_slice(char *s, char *e)
 {
 	char *p;
-	char *ep = 0;
-	char *cp = 0;
+	char *dp = 0;
+	char *rdp = 0;
 
 	for (p = s; p < e; p++) {
-		if (ep)
+		if (dp)
 			return validate_int(p, e);
 
 		if (*p == SLICE_DELIMITER) {
-			ep = p;
+			dp = p;
 		} else if (is_slice_range_delimiter(p)) {
-			if (cp)
+			if (rdp)
 				goto invalid;
-			cp = p;
+			rdp = p;
 			p += SLICE_RANGE_DELIMITER_LEN - 1;
 		} else if (!isdigit(*p)) {
 			goto invalid;
@@ -483,19 +483,19 @@ invalid:
 ValidateResult IO::validate_float_slice(char *s, char *e)
 {
 	char *p;
-	char *ep = 0;
-	char *cp = 0;
+	char *dp = 0;
+	char *rdp = 0;
 
 	for (p = s; p < e; p++) {
-		if (ep)
+		if (dp)
 			return validate_float(p, e);
 
 		if (*p == SLICE_DELIMITER) {
-			ep = p;
+			dp = p;
 		} else if (is_slice_range_delimiter(p)) {
-			if (cp)
+			if (rdp)
 				goto invalid;
-			cp = p;
+			rdp = p;
 			p += SLICE_RANGE_DELIMITER_LEN - 1;
 		} else if (!isdigit(*p)) {
 			goto invalid;
@@ -658,7 +658,7 @@ void IO::eval_float_slice_array(char *s, char *e)
 
 void IO::eval_int_slice(char *s, char *e)
 {
-	char *p, *ep = 0, *cp = 0;
+	char *p, *dp = 0, *rdp = 0;
 	int *array = (int *) values[ikey];
 	int value = 0;
 	size_t start = 0, end = 0;
@@ -666,22 +666,22 @@ void IO::eval_int_slice(char *s, char *e)
 
 	for (p = s; p < e; p++) {
 		if (*p == SLICE_DELIMITER)
-			ep = p;
+			dp = p;
 		else if (is_slice_range_delimiter(p))
-			cp = p;
+			rdp = p;
 	}
 
-	if (cp) {
-		if (cp > s)
-			start = atois(s, cp);
+	if (rdp) {
+		if (rdp > s)
+			start = atois(s, rdp);
 
-		if (cp < ep - SLICE_RANGE_DELIMITER_LEN)
-			end = atois(cp + SLICE_RANGE_DELIMITER_LEN, ep);
+		if (rdp < dp - SLICE_RANGE_DELIMITER_LEN)
+			end = atois(rdp + SLICE_RANGE_DELIMITER_LEN, dp);
 	} else {
-		start = atois(s, ep);
+		start = atois(s, dp);
 	}
 
-	value = atois(ep + 1, e);
+	value = atois(dp + 1, e);
 
 	if (end) {
 		for (i = start; i < end; i++)
@@ -693,7 +693,7 @@ void IO::eval_int_slice(char *s, char *e)
 
 void IO::eval_float_slice(char *s, char *e)
 {
-	char *p, *ep = 0, *cp = 0;
+	char *p, *dp = 0, *rdp = 0;
 	float *array = (float *) values[ikey];
 	float value = 0;
 	size_t start = 0, end = 0;
@@ -701,22 +701,22 @@ void IO::eval_float_slice(char *s, char *e)
 
 	for (p = s; p < e; p++) {
 		if (*p == SLICE_DELIMITER)
-			ep = p;
+			dp = p;
 		else if (is_slice_range_delimiter(p))
-			cp = p;
+			rdp = p;
 	}
 
-	if (cp) {
-		if (cp > s)
-			start = atois(s, cp);
+	if (rdp) {
+		if (rdp > s)
+			start = atois(s, rdp);
 
-		if (cp < ep - SLICE_RANGE_DELIMITER_LEN)
-			end = atois(cp, ep);
+		if (rdp < dp - SLICE_RANGE_DELIMITER_LEN)
+			end = atois(rdp, dp);
 	} else {
-		start = atois(s, ep);
+		start = atois(s, dp);
 	}
 
-	value = strtods(ep + 1, e, NULL);
+	value = strtods(dp + 1, e, NULL);
 
 	if (end) {
 		for (i = start; i < end; i++)
