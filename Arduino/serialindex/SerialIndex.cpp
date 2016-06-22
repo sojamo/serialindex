@@ -1,83 +1,104 @@
 #include "SerialIndex.h"
+#include "IO.hpp"
 
-#define BAUDRATE 9600
-#define CAPACITY 2
-#define FCAPACITY 2
-#define BUFFERSIZE 16
-
-
-
- SerialIndex::SerialIndex(Stream &s) : Serialio(s)
+SerialIndex::SerialIndex(Serial_ &s) :
+	serial(s)
 {
 	begin();
+
+	mode = 0;
+}
+
+SerialIndex::~SerialIndex() 
+{
+}
+
+SerialIndex& SerialIndex::ping(char *k)
+{
+	// TODO
+	return *this; 
 }
 
 SerialIndex& SerialIndex::begin(void)
 {
-	return begin(BAUDRATE,CAPACITY,BUFFERSIZE);
+	return begin(BAUDRATE, CAPACITY, BUFFERSIZE);
 }
 
 SerialIndex& SerialIndex::begin(long theBaudrate)
 {
-	return begin(theBaudrate,CAPACITY,BUFFERSIZE);
+	return begin(theBaudrate, CAPACITY, BUFFERSIZE);
 }
 
 SerialIndex& SerialIndex::begin(long theBaudrate, int theCapacity)
 {
-	return begin(theBaudrate,theCapacity,BUFFERSIZE);
+	return begin(theBaudrate, theCapacity, BUFFERSIZE);
 }
 
 SerialIndex& SerialIndex::begin(long theBaudrate, int theCapacity, int theBufferSize)
 {
-	values_size = 0;
-	values_capacity = theCapacity;
+	serial.begin(theBaudrate);
 
-	functions_size = 0;
-	functions_capacity = FCAPACITY;
-
-	resize();
-
-	
-	Serial.begin(theBaudrate);
-	Serialio = Serial;
-
-	isRead = true;
-	isWrite = true;
-	buffer = new char[theBufferSize];
+	// TODO
 
 	return *this;
 }
 
-
-SerialIndex& SerialIndex::read( boolean b )
+SerialIndex& SerialIndex::io(const char *k, bool theIn, bool theOut) 
 {
-	isRead = b;
+	// TODO
 	return *this;
 }
 
-SerialIndex& SerialIndex::write( boolean b )
+SerialIndex& SerialIndex::in(char b) 
 {
-	isWrite = b;
+	// TODO
+	return *this;
+}
+
+SerialIndex& SerialIndex::out()
+{
+	// TODO
+	return *this;
+}
+
+SerialIndex& SerialIndex::read(bool b)
+{
+	if (b)
+		mode |= Mode::Read;
+	else
+		mode ^= Mode::Read;
+
+	return *this;
+}
+
+SerialIndex& SerialIndex::write(bool b)
+{
+	if (b)
+		mode |= Mode::Write;
+	else
+		mode ^= Mode::Write;
+
 	return *this;
 }
 
 void SerialIndex::update(void)
 {
-	if(isRead==true) {
-		if( Serialio.available( ) ) {
-			char b;
-			while (Serialio.available( ) ){
-				b = Serialio.read();
-				in(b);
-			}
-		}
-	}
+	if (mode & Mode::Read != 0)
+		read();
 
-	if(isWrite==true) {
-		out();
-	}
+	if (mode & Mode::Write != 0)
+		write();
 }
 
+void SerialIndex::read()
+{
+	while (serial.available())
+		IO::read(serial.read());
+}
 
-SerialIndex Index( Serial );
+void SerialIndex::write()
+{
+	// TODO
+}
 
+SerialIndex Index(Serial);
