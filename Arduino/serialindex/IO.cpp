@@ -15,7 +15,7 @@ IO::IO()
 	functions = new Function[capacity];
 	buffer    = new char[BUFFERSIZE];
 	ibuffer   = 0;
-	ikey      = -1;
+	ikey      = SIZE_MAX;
 	nkeys     = 0;
 }
 
