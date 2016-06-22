@@ -375,15 +375,15 @@ ValidateResult IO::validate_string(char *s, char *e)
 
 ValidateResult IO::validate_int_array(char *s, char *e)
 {
-	char *pp, *p;
+	char *pp, *q;
 	size_t i = 0;
 
-	for (pp = p = s; p < e; p++) {
-		if (*p == ',' || *p == ']') {
-			if (validate_int(pp, p) != ValidateResult::Ok)
+	for (pp = q = s; q < e; q++) {
+		if (*q == ',' || *q == ']') {
+			if (validate_int(pp, q) != ValidateResult::Ok)
 				return ValidateResult::Invalid;
 
-			pp = p + 1;
+			pp = q + 1;
 			i++;
 		}
 	}
@@ -393,15 +393,15 @@ ValidateResult IO::validate_int_array(char *s, char *e)
 
 ValidateResult IO::validate_float_array(char *s, char *e)
 {
-	char *pp, *p;
+	char *pp, *q;
 	size_t i = 0;
 
-	for (pp = p = s; p < e; p++) {
-		if (*p == ',' || *p == ']') {
-			if (validate_float(pp, p) != ValidateResult::Ok)
+	for (pp = q = s; q < e; q++) {
+		if (*q == ',' || *q == ']') {
+			if (validate_float(pp, q) != ValidateResult::Ok)
 				return ValidateResult::Invalid;
 
-			pp = p + 1;
+			pp = q + 1;
 			i++;
 		}
 	}
@@ -411,15 +411,15 @@ ValidateResult IO::validate_float_array(char *s, char *e)
 
 ValidateResult IO::validate_int_slice_array(char *s, char *e)
 {
-	char *pp, *p;
+	char *pp, *q;
 	size_t i = 0;
 
-	for (pp = p = s; p < e; p++) {
-		if (*p == ',' || *p == '}') {
-			if (validate_int_slice(pp, p) != ValidateResult::Ok)
+	for (pp = q = s; q < e; q++) {
+		if (*q == ',' || *q == '}') {
+			if (validate_int_slice(pp, q) != ValidateResult::Ok)
 				return ValidateResult::Invalid;
 
-			pp = p + 1;
+			pp = q + 1;
 			i++;
 		}
 	}
@@ -429,15 +429,15 @@ ValidateResult IO::validate_int_slice_array(char *s, char *e)
 
 ValidateResult IO::validate_float_slice_array(char *s, char *e)
 {
-	char *pp, *p;
+	char *pp, *q;
 	size_t i = 0;
 
-	for (pp = p = s; p < e; p++) {
-		if (*p == ',' || *p == '}') {
-			if (validate_float_slice(pp, p) != ValidateResult::Ok)
+	for (pp = q = s; q < e; q++) {
+		if (*q == ',' || *q == '}') {
+			if (validate_float_slice(pp, q) != ValidateResult::Ok)
 				return ValidateResult::Invalid;
 
-			pp = p + 1;
+			pp = q + 1;
 			i++;
 		}
 	}
@@ -567,13 +567,13 @@ void IO::eval_string(char *s, char *e)
 
 void IO::eval_int_array(char *s, char *e)
 {
-	char *pp, *p;
+	char *p, *q;
 	size_t i = 0;
 
-	for (pp = p = s; p < e; p++) {
-		if (*p == ',' || *p == ']') {
-			eval_int_array_nth(pp, p, i);
-			pp = p + 1;
+	for (p = q = s; q < e; q++) {
+		if (*q == ',' || *q == ']') {
+			eval_int_array_nth(p, q, i);
+			p = q + 1;
 			i++;
 		}
 	}
@@ -591,13 +591,13 @@ void IO::eval_int_array_nth(char *s, char *e, size_t i)
 
 void IO::eval_float_array(char *s, char *e)
 {
-	char *pp, *p;
+	char *p, *q;
 	size_t i = 0;
 
-	for (pp = p = s; p < e; p++) {
-		if (*p == ',' || *p == ']') {
-			eval_float_array_nth(pp, p, i);
-			pp = p + 1;
+	for (p = q = s; q < e; q++) {
+		if (*q == ',' || *q == ']') {
+			eval_float_array_nth(p, q, i);
+			p = q + 1;
 			i++;
 		}
 	}
@@ -615,13 +615,13 @@ void IO::eval_float_array_nth(char *s, char *e, size_t i)
 
 void IO::eval_int_slice_array(char *s, char *e)
 {
-	char *pp, *p;
+	char *p, *q;
 	size_t i = 0;
 
-	for (pp = p = s; p < e; p++) {
-		if (*p == ',' || *p == '}') {
-			eval_int_slice(pp, p);
-			pp = p + 1;
+	for (p = q = s; q < e; q++) {
+		if (*q == ',' || *q == '}') {
+			eval_int_slice(p, q);
+			p = q + 1;
 			i++;
 		}
 	}
@@ -629,13 +629,13 @@ void IO::eval_int_slice_array(char *s, char *e)
 
 void IO::eval_float_slice_array(char *s, char *e)
 {
-	char *pp, *p;
+	char *p, *q;
 	size_t i = 0;
 
-	for (pp = p = s; p < e; p++) {
-		if (*p == ',' || *p == '}') {
-			eval_float_slice(pp, p);
-			pp = p + 1;
+	for (p = q = s; q < e; q++) {
+		if (*q == ',' || *q == '}') {
+			eval_float_slice(p, q);
+			p = q + 1;
 			i++;
 		}
 	}
