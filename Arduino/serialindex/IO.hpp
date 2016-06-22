@@ -119,7 +119,6 @@ private:
 	size_t         capacity;
 
 	size_t         find_key(const char *s);
-	size_t         find_key(const char *s, const char *e);
 	void           reset_context(void);
 	bool           is_eol();
 

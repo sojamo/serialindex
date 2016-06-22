@@ -737,15 +737,3 @@ size_t IO::find_key(const char *s)
 
 	return SIZE_MAX;
 }
-
-size_t IO::find_key(const char *start, const char *end) 
-{
-	size_t i;
-
-	for (i = 0; i < nkeys; i++) {
-		if (strncmp(keys[i], start, end - start) == 0)
-			return i;
-	}
-
-	return -1;
-}
