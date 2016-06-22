@@ -542,18 +542,16 @@ void IO::eval(char *s, char *e)
 
 void IO::eval_int(char *s, char *e)
 {
-	int value;
+	int *value = (int *) values[ikey];
 
-	value = atois(s, e);
-	memcpy(values[ikey], &value, sizeof(value));
+	*value = atois(s, e);
 }
 
 void IO::eval_float(char *s, char *e)
 {
-	float value;
+	float *value = (float *) values[ikey];
 	
-	value = strtods(s, e, NULL);
-	memcpy(values[ikey], &value, sizeof(value));
+	*value = strtods(s, e, NULL);
 }
 
 void IO::eval_string(char *s, char *e)
@@ -586,13 +584,11 @@ void IO::eval_int_array(char *s, char *e)
 void IO::eval_int_array_nth(char *s, char *e, size_t i)
 {
 	int *array = (int *) values[ikey];
-	int value = 0;
 
 	if (*s == ']' && *e == ']')
 		return;
 
-	value = atois(s, e);
-	memcpy(&array[i], &value, sizeof(value));
+	array[i] = atois(s, e);
 }
 
 void IO::eval_float_array(char *s, char *e)
@@ -612,13 +608,11 @@ void IO::eval_float_array(char *s, char *e)
 void IO::eval_float_array_nth(char *s, char *e, size_t i)
 {
 	float *array = (float *) values[ikey];
-	float value = 0;
 
 	if (*s == ']' && *e == ']')
 		return;
 
-	value = strtods(s, e, NULL);
-	memcpy(&array[i], &value, sizeof(value));
+	array[i] = strtods(s, e, NULL);
 }
 
 void IO::eval_int_slice_array(char *s, char *e)
@@ -678,9 +672,9 @@ void IO::eval_int_slice(char *s, char *e)
 
 	if (end) {
 		for (i = start; i < end; i++)
-			memcpy(&array[i], &value, sizeof(value));
+			array[i] = value;
 	} else {
-		memcpy(&array[start], &value, sizeof(value));
+		array[start] = value;
 	}
 }
 
@@ -713,9 +707,9 @@ void IO::eval_float_slice(char *s, char *e)
 
 	if (end) {
 		for (i = start; i < end; i++)
-			memcpy(&array[i], &value, sizeof(value));
+			array[i] = value;
 	} else {
-		memcpy(&array[start], &value, sizeof(value));
+		array[start] = value;
 	}
 }
 
