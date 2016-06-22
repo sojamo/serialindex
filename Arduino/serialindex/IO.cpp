@@ -326,15 +326,8 @@ void IO::read_float_slice_array(char c)
 
 void IO::read_skip(char c)
 {
-	size_t i;
-
-	if (ibuffer < EOL_LEN)
+	if (!is_eol())
 		return;
-
-	for (i = 0; i < EOL_LEN; i++) {
-		if (buffer[ibuffer - EOL_LEN + i] != EOL[i])
-			return;
-	}
 
 	reset_context();
 }
