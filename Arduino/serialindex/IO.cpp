@@ -64,7 +64,6 @@ IO& IO::listen(const char *k, void (*v)(void))
 	if (!k)
 		goto out;
 
-	// Find key-value to associate the function with
 	i = find_key(k);
 	if (i < 0)
 		goto out;
@@ -156,7 +155,6 @@ skip:
 	context = Context::Skip;
 }
 
-// read_value() determines the type of current incoming data
 void IO::read_value(char c)
 {
 	const Type type = types[ikey];
