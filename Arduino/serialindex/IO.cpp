@@ -367,10 +367,8 @@ ValidateResult IO::validate_string(char *s, char *e)
 	const bool has_start_quote = fc == '\'' || fc == '"';
 	const bool has_end_quote = e - s > 1 && *(e - 1) == fc;
 
-	if (has_start_quote) {
-		if (!has_end_quote)
-			return ValidateResult::Continue;
-	}
+	if (has_start_quote && !has_end_quote)
+		return ValidateResult::Continue;
 
 	return ValidateResult::Ok;
 }
