@@ -666,16 +666,13 @@ void IO::eval_int_slice(char *s, char *e)
 			end = atois(rdp + SLICE_RANGE_DELIMITER_LEN, dp);
 	} else {
 		start = atois(s, dp);
+		end = start + 1;
 	}
 
 	value = atois(dp + 1, e);
 
-	if (end) {
-		for (i = start; i < end; i++)
-			array[i] = value;
-	} else {
-		array[start] = value;
-	}
+	for (i = start; i < end; i++)
+		array[i] = value;
 }
 
 void IO::eval_float_slice(char *s, char *e)
@@ -701,16 +698,13 @@ void IO::eval_float_slice(char *s, char *e)
 			end = atois(rdp, dp);
 	} else {
 		start = atois(s, dp);
+		end = start + 1;
 	}
 
 	value = strtods(dp + 1, e, NULL);
 
-	if (end) {
-		for (i = start; i < end; i++)
-			array[i] = value;
-	} else {
-		array[start] = value;
-	}
+	for (i = start; i < end; i++)
+		array[i] = value;
 }
 
 bool IO::is_eol()
