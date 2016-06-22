@@ -695,7 +695,7 @@ void IO::eval_float_slice(char *s, char *e)
 			start = atois(s, rdp);
 
 		if (rdp < dp - SLICE_RANGE_DELIMITER_LEN)
-			end = atois(rdp, dp);
+			end = atois(rdp + SLICE_RANGE_DELIMITER_LEN, dp);
 	} else {
 		start = atois(s, dp);
 		end = start + 1;
